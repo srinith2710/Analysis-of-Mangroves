@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- Leaflet.draw CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" />
+
+  <!-- Leaflet JavaScript -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Leaflet.draw JavaScript -->
+  <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+
+  <style>
+    html,
+    body {
+      margin: 0px;
+      padding: 0px;
+    }
+
+    #map {
+      height: 500px;
+      width: 100%;
+      transition: width 1s ease;
+    }
+
+    img {
+      display: block;
+      margin: 0px auto;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      display: block;
+      /* max-width: 600px; */
+      animation: modalOpen 0.3s ease-out;
+    }
+
+    @keyframes modalOpen {
+      0% {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    [id^="openModalBtn"] img {
+      cursor: pointer;
+      filter: brightness(1);
+      transition: filter 0.5s;
+    }
+
+    [id^="openModalBtn"] img:hover {
+      filter: brightness(0.7);
+    }
+
+
+    .maximize-icon {
+      opacity: 0;
+      position: absolute;
+      filter: invert(1);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      margin-top: 1.2rem;
+      z-index: 1;
+      transition: opacity 0.5s;
+      pointer-events: none;
+    }
+
+    .heading {
+      display: inline-block;
+      margin: 0px auto;
+    }
+
+    #thead {
+      position: sticky;
+      top: 0;
+      background-color: #fff;
+      /* Optional: Set background color for the sticky thead */
+      z-index: 1;
+      /* Optional: Set a higher z-index to ensure thead appears above tbody */
+    }
+
+    .overflow-y {
+      max-height: 200px;
+      /* Set the desired maximum height for the tbody */
+      overflow-y: auto;
+      /* Enable vertical scroll when content exceeds the max-height */
+    }
+  </style>
+
+  <title>Data Cube</title>
+</head>
+
+<body>
+  <!-- <button id="openModalBtn">Open Modal</button> -->
+  <div id="modal" class="modal">
+    <div style="display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <!-- <h2>Modal Title</h2> -->
+        <img id="max_img" style="width: 100%;"></img>
+      </div>
+    </div>
+  </div>
+  <header>
+    <div style="display: flex; justify-content: center; padding: 10px 0px; background-color: bisque;">
+      <h2>Analysis of Mangroves</h2>
+    </div>
+  </header>
+  <div class="container mt-5">
+    <button class="btn my-3 btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#filter"
+      aria-expanded="false" aria-controls="filter"><i class="bi bi-filter-right me-2"></i>Filter</button>
+    <div id="filter" class="collapse">
+      <div class="row input-group my-4 mx-0">
+        <span class="col-lg-1 input-group-text">Latitude</span>
+        <input type="text" class="form-control" id="latitude" aria-labelledby="latitude">
+        <span class="col-lg-1 input-group-text">Longitude</span>
+        <input type="text" class="form-control" id="longitude" aria-labelledby="longitude">
+        <span class="col-lg-1 input-group-text">Buffer</span>
+        <input type="text" class="form-control" id="buffer" aria-labelledby="buffer">
+      </div>
+    </div>
+    <div class="row input-group mb-3 mx-0">
+      <span class="col-lg-1 input-group-text">From Date</span>
+      <input type="date" class="col-lg-5 form-control" name="fromdate" max="" value="" />
+      <span class="input-group-text col-lg-1">To Date</span>
+      <input type="date" class="col-lg-5 form-control" name="todate" max="" value="" />
+    </div>
+    <div class="row input-group my-4 mx-0">
+      <span class="col-lg-1 input-group-text">Calculation</span>
+      <select class="form-select col-lg-5 " id="calc" name="calc">
+        <option selected>NDVI</option>
+        <option>NDWI</option>
+        <option>Mangrove Analysis</option>
+      </select>
+    </div>
+    <div class="d-flex justify-content-center">
+      <button class="btn my-1 btn-primary" onclick="OnChange()">Submit</button>
+    </div>
+    <div>
+      <h2 class="heading text">Map</h2>
+    </div>
+    <!-- <div class="row">
+      <div id="map" class="rounded"></div>
+      <div class="col">
+        <canvas id="chartCanvas" style="height: 100%; width: 100%; display: none;"></canvas>
+      </div>
+    </div> -->
+    <div style="display: flex; flex-direction: row;">
+      <div id="map" class="rounded"></div>
+      <div id="mgr" class="ms-5" style="width: 50%; display: none;">
+        <canvas id="chartCanvas" class="w-100" style="height: 100%;"></canvas>
+      </div>
+    </div>
+    <!-- <div > -->
+    <!-- <div class="d-flex" style="width: 50%; height: 100%;"> -->
+    <div id="tcont" class="overflow-y my-5" style="display: none;">
+      <table class="table">
+        <thead id="thead">
+
+        </thead>
+        <tbody id="tbody">
+
+        </tbody>
+      </table>
+    </div>
+    <!-- </div> -->
+    <!-- </div> -->
+    <!-- <div id="lat_lon" class="text-center mt-4"></div> -->
+    <div id="imgcont" class="d-flex flex-row flex-wrap justify-content-between h-5" style="margin: 1.5rem 0rem;">
+      <!-- <img src="{{ url_for('static', filename = 'my_plot.png') }}" class="d-block mx-auto"> -->
+
+    </div>
+    <!-- <p id="progress-bar"></p> -->
+    <div id="loader" class="spinner-border text-primary d-block mx-auto my-5 d-none" role="status">
+      <span class="visually-hidden"></span>
+    </div>
+  </div>
+  <!-- <script src="https://code.jquery.com/jquery-3.6.4.min.js"
+    integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script> -->
+  <script src="{{ url_for('static', filename = 'temp.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"
+    integrity="sha384-zYPOMqeu1DAVkHiLqWBUTcbYfZ8osu1Nd6Z89ify25QV9guujx43ITvfi12/QExE"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.min.js"
+    integrity="sha384-Y4oOpwW3duJdCWv5ly8SCFYWqFDsfob/3GkgExXKV4idmbt98QcxXYs9UoXAB7BZ"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>
