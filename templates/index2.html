@@ -21,6 +21,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+  <script src="https://cdn.plot.ly/plotly-2.24.1.min.js" charset="utf-8"></script>
 
   <style>
     html,
@@ -59,7 +60,6 @@
       border: 1px solid #888;
       width: 80%;
       display: block;
-      /* max-width: 600px; */
       animation: modalOpen 0.3s ease-out;
     }
 
@@ -141,7 +141,6 @@
 </head>
 
 <body>
-  <!-- <button id="openModalBtn">Open Modal</button> -->
   <div id="modal" class="modal">
     <div style="display: flex;
     justify-content: center;
@@ -149,7 +148,6 @@
     height: 100%;">
       <div class="modal-content">
         <span class="close">&times;</span>
-        <!-- <h2>Modal Title</h2> -->
         <img id="max_img" style="width: 100%;"></img>
       </div>
     </div>
@@ -183,7 +181,8 @@
       <select class="form-select col-lg-5 " id="calc" name="calc">
         <option selected>NDVI</option>
         <option>NDWI</option>
-        <option>Mangrove Analysis</option>
+        <option value="Mangrove Analysis">MVI and Change in Mangrove Area</option>
+        <option>ML Analysis</option>
       </select>
     </div>
     <div class="d-flex justify-content-center">
@@ -192,20 +191,12 @@
     <div>
       <h2 class="heading text">Map</h2>
     </div>
-    <!-- <div class="row">
-      <div id="map" class="rounded"></div>
-      <div class="col">
-        <canvas id="chartCanvas" style="height: 100%; width: 100%; display: none;"></canvas>
-      </div>
-    </div> -->
     <div style="display: flex; flex-direction: row;">
-      <div id="map" class="rounded"></div>
-      <div id="mgr" class="ms-5" style="width: 50%; display: none;">
+      <div id="map" class="rounded" style="width: 48%"></div>
+      <div id="mgr" class="ms-5" style="width: 48%; display: none;">
         <canvas id="chartCanvas" class="w-100" style="height: 100%;"></canvas>
       </div>
     </div>
-    <!-- <div > -->
-    <!-- <div class="d-flex" style="width: 50%; height: 100%;"> -->
     <div id="tcont" class="overflow-y my-5" style="display: none;">
       <table class="table">
         <thead id="thead">
@@ -216,20 +207,17 @@
         </tbody>
       </table>
     </div>
-    <!-- </div> -->
-    <!-- </div> -->
-    <!-- <div id="lat_lon" class="text-center mt-4"></div> -->
+    <div id="randomForest" style="display: none;">
+      <div id="plot-container"></div>
+    </div>
     <div id="imgcont" class="d-flex flex-row flex-wrap justify-content-between h-5" style="margin: 1.5rem 0rem;">
-      <!-- <img src="{{ url_for('static', filename = 'my_plot.png') }}" class="d-block mx-auto"> -->
 
     </div>
-    <!-- <p id="progress-bar"></p> -->
     <div id="loader" class="spinner-border text-primary d-block mx-auto my-5 d-none" role="status">
       <span class="visually-hidden"></span>
     </div>
   </div>
-  <!-- <script src="https://code.jquery.com/jquery-3.6.4.min.js"
-    integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script> -->
+
   <script src="{{ url_for('static', filename = 'temp.js') }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"
     integrity="sha384-zYPOMqeu1DAVkHiLqWBUTcbYfZ8osu1Nd6Z89ify25QV9guujx43ITvfi12/QExE"

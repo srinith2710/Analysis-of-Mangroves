@@ -4,7 +4,8 @@ let today = new Date().toISOString().split("T")[0];
 td.max = today;
 fd.max = today;
 var count = 0
-
+let z=1
+let klm = 1
 let chart, data, labels;
 
 let map = L.map('map').setView([15.805, 80.9], 10);
@@ -72,10 +73,7 @@ function performTask(lab) {
 
 function appendData(newData, lab) {
   const dataset = chart.data.datasets;
-  // print(type(dataset))
   dataset.push(newData);
-  // chart.data.labels.push(lab)
-  // console.log(newData)
   chart.update();
 }
 
@@ -140,18 +138,39 @@ function appendContent(newContent) {
   // Append the new content to the element without overwriting the existing content
   element.insertAdjacentHTML("afterbegin", newContent);
 
-  const imgElement = document.querySelector(`#openModalBtn${count} img`);
-  const maximizeIcon = document.querySelector(`#openModalBtn${count} .maximize-icon`);
+  try {
+    const imgElement = document.querySelector(`#openModalBtn${count} img`);
+    const maximizeIcon = document.querySelector(`#openModalBtn${count} .maximize-icon`);
 
-  // Add event listener to the img element
-  imgElement.addEventListener('mouseenter', () => {
-    maximizeIcon.style.opacity = "1";
-  });
+    // Add event listener to the img element
+    imgElement.addEventListener('mouseenter', () => {
+      maximizeIcon.style.opacity = "1";
+    });
 
-  imgElement.addEventListener('mouseleave', () => {
-    // maximizeIcon.style.display = "none";
-    maximizeIcon.style.opacity = "0";
-  });
+    imgElement.addEventListener('mouseleave', () => {
+      // maximizeIcon.style.display = "none";
+      maximizeIcon.style.opacity = "0";
+    });
+    const openModalBtn = document.querySelector(`#openModalBtn${count} img`);
+    const modal = document.getElementById("modal");
+    const closeBtn = document.querySelector(".close");
+    const mimg = document.getElementById("max_img");
+
+    openModalBtn.addEventListener("click", function (event) {
+      modal.style.display = "block";
+      mimg.src = event.target.src;
+    });
+
+    closeBtn.addEventListener("click", function () {
+      modal.style.display = "none";
+    });
+
+    window.addEventListener("click", function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    });
+  } catch (error) { console.log("No Data Found") }
 }
 
 
@@ -179,13 +198,31 @@ function send_req(col, send_data) {
   </div>`;
         appendContent(newContent);
       }
+      else if (data.plot) {
+        document.getElementById("loader").classList.add("d-none");
+        performTask(data.points.labels, send_data['index']);
+        const plotData = JSON.parse(data.plot);
+        console.log(plotData)
+        document.getElementById('randomForest').style.display = "block"
+        let newContent = `<div id="plot-container-${klm}"></div>`;
+        document.getElementById("plot-container").insertAdjacentHTML("afterbegin", newContent)
+        Plotly.newPlot(`plot-container-${klm}`, plotData);
+        klm++;
+        appendData({
+          label: `${data.area_name}`,
+          data: data.points.actual_values,
+          fill: false,
+          borderColor: `${col}`,
+          tension: 0.1
+        }, data.points.labels)
+      }
       else {
         count++;
         document.getElementById("loader").classList.add("d-none");
         let tableBody = document.getElementById('tbody');
         let newRow = document.createElement('tr');
         // Create the HTML content for the new row
-        let rowContent = `<th style="background-color: ${col}; color: ${getContrastColor(col)}">${count} Avg ${send_data['index']}</th>`;
+        let rowContent = `<th style="background-color: ${col}; color: ${getContrastColor(col)}">${z++} Avg ${send_data['index']}</th>`;
 
         for (i of data.data) {
           rowContent += `<td>${i}</td>`
@@ -214,25 +251,18 @@ function send_req(col, send_data) {
     </div>
   </div>`;
         appendContent(newContent);
-        const openModalBtn = document.querySelector(`#openModalBtn${count} img`);
-        const modal = document.getElementById("modal");
-        const closeBtn = document.querySelector(".close");
-        const mimg = document.getElementById("max_img");
-
-        openModalBtn.addEventListener("click", function (event) {
-          modal.style.display = "block";
-          mimg.src = event.target.src;
-        });
-
-        closeBtn.addEventListener("click", function () {
-          modal.style.display = "none";
-        });
-
-        window.addEventListener("click", function (event) {
-          if (event.target == modal) {
-            modal.style.display = "none";
-          }
-        });
+        if (send_data['index'] == "Mangrove Analysis") {
+          count++;
+          newContent = `<div id="openModalBtn${count}" class="fade-out" style="width: 48%;">
+            <span class="badge text-bg-primary" style="float: right; margin: 1.2rem 0rem;">${data.area},${send_data['index']}</span>
+            <div style="position: relative;">
+            <span class="maximize-icon"><i class="bi bi-zoom-in"></i></span>
+            <img src="data:image/png;base64,${data.chman}"
+            style="width: 100%; height: 16.8rem; border: 2px solid ${col}; margin: 2rem 0rem; border-radius: 10px;">
+            </div>
+            </div>`;
+          appendContent(newContent);
+        }
       }
     }).catch(error => {
       console.log('An error occurred:', error);
@@ -275,32 +305,9 @@ function OnChange() {
       }
       console.log(data)
       send_req(col, data)
-      // document.getElementById("lat_lon").innerHTML = `The Selected values range is <br>Latitude = (${lat_min}, ${lat_max})<br>Longitude = (${lng_min}, ${lng_max})`
+
     }
   } catch (error) {
-    // if (lat == NaN && lon == NaN && buf == NaN) {
-    // let polygonCoordinates = [
-    //   [lat - buf, lon - buf],
-    //   [lat + buf, lon - buf],
-    //   [lat + buf, lon + buf],
-    //   [lat - buf, lon + buf]
-    // ];
-    // let lat_min = lat - buf;
-    // let lat_max = lat + buf;
-    // let lng_min = lon - buf;
-    // let lng_max = lon + buf;
-    // Create a polygon using the coordinates
-    // let col = "#" + Math.floor(Math.random() * 16777215).toString(16);
-    // var polygon = L.polygon(polygonCoordinates, { color: col }).addTo(map);
-    // let data = {
-    //   lat_min: lat_min,
-    //   lat_max: lat_max,
-    //   lng_min: lng_min,
-    //   lng_max: lng_max,
-    //   todate: todate,
-    //   fromdate: fromdate,
-    //   index: index
-    // }
     console.log(data)
     send_req(polygonCoordinates["col"], polygonCoordinates)
   }
@@ -337,5 +344,4 @@ map.on('draw:created', function (e) {
   }
   polygonCoordinates = data;
   console.log(data)
-  // send_req(layer.options.color, data);
 });
