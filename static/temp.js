@@ -8,7 +8,7 @@ let z=1
 let klm = 1
 let chart, data, labels;
 
-let map = L.map('map').setView([15.805, 80.9], 10);
+let map = L.map('map').setView([22.390472, 69.628927], 10);
 
 let taskExecuted = false;
 
@@ -82,7 +82,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-let latlng = L.latLng(15.7, 80.85);
+
 
 let drawnItems = L.featureGroup().addTo(map);
 
