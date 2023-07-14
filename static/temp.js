@@ -13,7 +13,7 @@ let map = L.map('map').setView([22.390472, 69.628927], 10);
 let taskExecuted = false;
 
 
-function performTask(lab) {
+function performTask(lab, ind) {
   if (!taskExecuted) {
     // Task logic goes here
     labels = lab;
@@ -26,16 +26,19 @@ function performTask(lab) {
     var newRow = document.createElement('tr');
 
     // Create the HTML content for the new row
-    tcont.style.display = 'block'
-    var rowContent = `<th scope="row">Analysis</th>`;
-    for (i of lab) {
-      rowContent += `<th>${i}</th>`;
-    }
-    newRow.innerHTML = rowContent;
-    head.appendChild(newRow)
+    if(ind != "ML Analysis"){
+      tcont.style.display = 'block'
+      var rowContent = `<th scope="row">Analysis</th>`;
+      for (i of lab) {
+        rowContent += `<th>${i}</th>`;
+      }
+      newRow.innerHTML = rowContent;
+      head.appendChild(newRow)
+  
+      // Set the HTML content of the new row
+      newRow.innerHTML = rowContent;
 
-    // Set the HTML content of the new row
-    newRow.innerHTML = rowContent;
+    }
     mgr.style.display = "block";
     map.invalidateSize();
 
@@ -47,7 +50,23 @@ function performTask(lab) {
       },
       scales: {
         x: {
-          display: true
+          title: {
+            display: true,
+            text:"Date"
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text:(ind != "Mangrove Analysis") ? "Avg "+ind :"Mangrove Area(sq.km)"
+          }
+        }
+
+      },
+      plugins: {
+        title: {
+          display: true,
+          text: (ind == "Mangrove Analysis") ? "Mangrove Area Change(sq.km)" : ind
         }
       }
     };
@@ -231,7 +250,7 @@ function send_req(col, send_data) {
         // Set the HTML content of the new row
         newRow.innerHTML = rowContent;
 
-        performTask(data.labels);
+        performTask(data.labels, send_data["index"]);
 
         // Append the new row to the table body
         tableBody.appendChild(newRow);

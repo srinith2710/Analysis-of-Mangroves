@@ -106,14 +106,14 @@ def mang_ml_analysis(ds, lat_range, lon_range):
 
     grouped_df = df.groupby(['year', 'month'])
 
-    # Step 3: Calculate the mean of 'forest_field' for each group
-    mean_forest_field = grouped_df['mangrove'].mean()
+    # Step 3: Calculate the mean of 'mangrove_field' for each group
+    mean_mangrove_field = grouped_df['mangrove'].mean()
 
     # Step 4: Optional - Reset the index of the resulting DataFrame
-    mean_forest_field = mean_forest_field.reset_index()
-    print(mean_forest_field)
+    mean_mangrove_field = mean_mangrove_field.reset_index()
+    print(mean_mangrove_field)
 
-    df = mean_forest_field
+    df = mean_mangrove_field
 
     X = df[["year", "month"]]
     y = df["mangrove"]
@@ -131,12 +131,12 @@ def mang_ml_analysis(ds, lat_range, lon_range):
     plot_data = [
         go.Scatter(
             x = df['year-month'],
-            y = df['mangrove']/1000000,
+            y = df['mangrove'],
             name = "Mangrove Actual"
         ),
         go.Scatter(
             x = df['year-month'],
-            y = y_pred/1000000,
+            y = y_pred,
             name = "Mangrove Predicted"
         )
     ]
@@ -261,7 +261,7 @@ def my_flask_function():
                 "resolution":(-30, 30)
             }
         col = ""
-        vmin = -1
+        vmin = -0.5
         vmax = 1
         try:
             ds = dc.load(product="s2a_sen2cor_granule",**query)
