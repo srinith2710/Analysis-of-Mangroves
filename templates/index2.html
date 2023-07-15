@@ -179,10 +179,10 @@
     <div class="row input-group my-4 mx-0">
       <span class="col-lg-1 input-group-text">Calculation</span>
       <select class="form-select col-lg-5 " id="calc" name="calc">
-        <option selected value="NDVI">Vegetation Analysis </option>
-        <option value="NDWI">Water Analysis</option>
-        <option value="Mangrove Analysis">MVI and Change in Mangrove Extent</option>
-        <option value="ML Analysis">Mangrove Area Prediction using Random Forest</option>
+        <option id="NDVI" selected value="NDVI">Vegetation Analysis </option>
+        <option id="NDWI" value="NDWI">Water Analysis</option>
+        <option id="Mangrove Analysis" value="Mangrove Analysis">MVI and Change in Mangrove Extent</option>
+        <option id="ML Analysis" value="ML Analysis">Mangrove Area Prediction using Random Forest</option>
       </select>
     </div>
     <div class="d-flex justify-content-center">
@@ -207,7 +207,7 @@
         </tbody>
       </table>
     </div>
-    <div id="randomForest" style="display: none;">
+    <div id="randomForest" style="display: none;max-height: 450px;overflow-y: auto;overflow-x: hidden;">
       <div id="plot-container"></div>
     </div>
     <div id="imgcont" class="d-flex flex-row flex-wrap justify-content-between h-5" style="margin: 1.5rem 0rem;">

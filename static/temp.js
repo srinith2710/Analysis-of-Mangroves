@@ -11,7 +11,7 @@ let chart, data, labels;
 let map = L.map('map').setView([22.390472, 69.628927], 10);
 
 let taskExecuted = false;
-
+let ch;
 
 function performTask(lab, ind) {
   if (!taskExecuted) {
@@ -22,8 +22,26 @@ function performTask(lab, ind) {
     let head = document.getElementById('thead');
     let tcont = document.getElementById('tcont');
     const m = document.getElementById('map');
-    m.style.width = "50%"
+    m.style.width = "50%";
     var newRow = document.createElement('tr');
+    ch = Chart.instances[0];
+
+    if(ch){
+      var rowContent = `<th scope="row">Analysis</th>`;
+      for (i of lab) {
+        rowContent += `<th>${i}</th>`;
+      }
+      head.innerHTML = `<tr>${rowContent}</tr>`;
+      chart.data = {
+        labels: labels,
+        datasets: []
+      };
+      chart.options.plugins.title.text = (ind == "Mangrove Analysis") ? "Mangrove Area Change" : document.getElementById(ind).innerHTML;
+      chart.options.scales.y.title.text = (ind != "Mangrove Analysis") ? (ind != "ML Analysis")?"Avg " + ind:"Actual Values" : "Mangrove Area (sq.km)";
+      chart.update();
+      taskExecuted = true;
+      return;
+    }
 
     // Create the HTML content for the new row
     if(ind != "ML Analysis"){
@@ -66,7 +84,7 @@ function performTask(lab, ind) {
       plugins: {
         title: {
           display: true,
-          text: (ind == "Mangrove Analysis") ? "Mangrove Area Change(sq.km)" : ind
+          text: (ind == "Mangrove Analysis") ? "Mangrove Area Change(sq.km)" : document.getElementById(ind).innerHTML
         }
       }
     };
@@ -219,6 +237,10 @@ function send_req(col, send_data) {
       }
       else if (data.plot) {
         document.getElementById("loader").classList.add("d-none");
+        if(send_data["index"]!=p){
+          p = send_data['index']
+          taskExecuted = false
+        }
         performTask(data.points.labels, send_data['index']);
         const plotData = JSON.parse(data.plot);
         console.log(plotData)
@@ -242,13 +264,17 @@ function send_req(col, send_data) {
         let newRow = document.createElement('tr');
         // Create the HTML content for the new row
         let rowContent = `<th style="background-color: ${col}; color: ${getContrastColor(col)}">${z++} Avg ${send_data['index']}</th>`;
-
+        
         for (i of data.data) {
           rowContent += `<td>${i}</td>`
         }
-
+        
         // Set the HTML content of the new row
         newRow.innerHTML = rowContent;
+        if(send_data["index"]!=p){
+          p = send_data['index']
+          taskExecuted = false
+        }
 
         performTask(data.labels, send_data["index"]);
 
@@ -261,8 +287,8 @@ function send_req(col, send_data) {
           borderColor: `${col}`,
           tension: 0.1
         }, data.labels)
-        let newContent = `<div id="openModalBtn${count}" class="fade-out" style="width: 48%;">
-    <span class="badge text-bg-primary" style="float: right; margin: 1.2rem 0rem;">${data.area},${send_data['index']}</span>
+        let newContent = `<div id="openModalBtn${count}" class="fade-out" style="${(send_data['index'] == "Mangrove Analysis") ? "" : "width:48%"}">
+    <span class="badge text-bg-primary" style="float: right; margin: 1.2rem 0rem;">${data.area},${document.getElementById(send_data['index']).innerHTML}</span>
     <div style="position: relative;">
     <span class="maximize-icon"><i class="bi bi-zoom-in"></i></span>
     <img src="data:image/png;base64,${data.image}"
@@ -270,23 +296,13 @@ function send_req(col, send_data) {
     </div>
   </div>`;
         appendContent(newContent);
-        if (send_data['index'] == "Mangrove Analysis") {
-          count++;
-          newContent = `<div id="openModalBtn${count}" class="fade-out" style="width: 48%;">
-            <span class="badge text-bg-primary" style="float: right; margin: 1.2rem 0rem;">${data.area},${send_data['index']}</span>
-            <div style="position: relative;">
-            <span class="maximize-icon"><i class="bi bi-zoom-in"></i></span>
-            <img src="data:image/png;base64,${data.chman}"
-            style="width: 100%; height: 16.8rem; border: 2px solid ${col}; margin: 2rem 0rem; border-radius: 10px;">
-            </div>
-            </div>`;
-          appendContent(newContent);
-        }
       }
     }).catch(error => {
       console.log('An error occurred:', error);
     });
 }
+
+let p = ""
 
 let polygonCoordinates;
 
@@ -331,6 +347,44 @@ function OnChange() {
     send_req(polygonCoordinates["col"], polygonCoordinates)
   }
 }
+
+fetch('/data', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    // for(let i in data){
+    //   console.log(i)
+    // }
+    console.log(data.data)
+    for(let i of data.data){
+      // var polygonCoords = [
+      //   [[80.06369921260253, 16.278761841360236],
+      //    [81.09135078500897, 16.280813604615744],
+      //    [81.09090724198668, 15.288158060683616],
+      //    [80.06824451551739, 15.286237505336244],
+      //    [80.06369921260253, 16.278761841360236]]
+      // ];
+      
+      // Create a Leaflet polygon
+      var reversedCoords = i.map(function(arr) {
+        return arr.map(function(coord) {
+            return [coord[1], coord[0]];
+        });
+    });
+      var polygon = L.polygon(reversedCoords, {color: 'blue'}).addTo(map);
+      
+      // Fit the map bounds to the polygon
+      map.fitBounds(polygon.getBounds());
+    }
+  }).catch(error => {
+    document.getElementById("loader").classList.add("d-none");
+    displayalert("An Error Occured While Fetching Data")
+    console.log('An error occurred:', error);
+  });
 
 // when a rectangle is drawn, add it to the drawnItems feature group
 map.on('draw:created', function (e) {
